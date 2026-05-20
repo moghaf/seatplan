@@ -1,5 +1,7 @@
 # SeatPlan
 
+[![Build Docker Images & Create Release](https://github.com/moghaf/seatplan/actions/workflows/docker-release.yml/badge.svg)](https://github.com/moghaf/seatplan/actions/workflows/docker-release.yml)
+
 A seat/desk planning web application for managing team seating arrangements with a visual seat map editor.
 
 ## Key Features
