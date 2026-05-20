@@ -68,6 +68,7 @@ public class SeatPlanDbContext(DbContextOptions<SeatPlanDbContext> options) : Db
                 .HasForeignKey(a => a.TeamMemberId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.SeatId, a.Date }).IsUnique();
+            e.HasIndex(a => new { a.TeamMemberId, a.Date }).IsUnique();
         });
 
         modelBuilder.Entity<SeatUnavailability>(e =>
@@ -97,6 +98,10 @@ public class SeatPlanDbContext(DbContextOptions<SeatPlanDbContext> options) : Db
                 .WithMany()
                 .HasForeignKey(u => u.TeamMemberId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(u => u.Function)
+                .WithMany()
+                .HasForeignKey(u => u.FunctionId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
     }

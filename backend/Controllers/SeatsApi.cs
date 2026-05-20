@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SeatPlan.Api.Data;
@@ -40,34 +41,64 @@ public static class SeatsApi
             });
         });
 
-        group.MapPost("/", async (Seat seat, SeatPlanDbContext db) =>
+        group.MapPost("/", async (Seat seat, HttpContext http, SeatPlanDbContext db) =>
         {
+            var role = http.User.FindFirstValue(ClaimTypes.Role);
+            if (role != "superAdmin")
+            {
+                var fnId = http.User.FindFirstValue("functionId");
+                if (role != "functionAdmin" || !int.TryParse(fnId, out var cf) || cf != seat.FunctionId)
+                    return Results.Forbid();
+            }
             db.Seats.Add(seat);
             await db.SaveChangesAsync();
             return Results.Created($"/api/seats/{seat.Id}", seat);
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        });
 
-        group.MapPut("/{id:int}", async (int id, Seat input, SeatPlanDbContext db) =>
+        group.MapPut("/{id:int}", async (int id, Seat input, HttpContext http, SeatPlanDbContext db) =>
         {
             var seat = await db.Seats.FindAsync(id);
             if (seat is null) return Results.NotFound();
+            var role = http.User.FindFirstValue(ClaimTypes.Role);
+            if (role != "superAdmin")
+            {
+                var fnId = http.User.FindFirstValue("functionId");
+                if (role != "functionAdmin" || !int.TryParse(fnId, out var cf) || cf != seat.FunctionId || cf != input.FunctionId)
+                    return Results.Forbid();
+            }
             seat.Name = input.Name;
             seat.FunctionId = input.FunctionId;
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        });
 
-        group.MapDelete("/{id:int}", async (int id, SeatPlanDbContext db) =>
+        group.MapDelete("/{id:int}", async (int id, HttpContext http, SeatPlanDbContext db) =>
         {
             var seat = await db.Seats.FindAsync(id);
             if (seat is null) return Results.NotFound();
+            var role = http.User.FindFirstValue(ClaimTypes.Role);
+            if (role != "superAdmin")
+            {
+                var fnId = http.User.FindFirstValue("functionId");
+                if (role != "functionAdmin" || !int.TryParse(fnId, out var cf) || cf != seat.FunctionId)
+                    return Results.Forbid();
+            }
             db.Seats.Remove(seat);
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        });
 
-        group.MapPost("/{seatId:int}/toggle-unavailable", async (int seatId, ToggleUnavailableRequest req, SeatPlanDbContext db) =>
+        group.MapPost("/{seatId:int}/toggle-unavailable", async (int seatId, ToggleUnavailableRequest req, HttpContext http, SeatPlanDbContext db) =>
         {
+            var seat = await db.Seats.FindAsync(seatId);
+            if (seat is null) return Results.NotFound();
+            var role = http.User.FindFirstValue(ClaimTypes.Role);
+            if (role != "superAdmin")
+            {
+                var fnId = http.User.FindFirstValue("functionId");
+                if (role != "functionAdmin" || !int.TryParse(fnId, out var cf) || cf != seat.FunctionId)
+                    return Results.Forbid();
+            }
             var date = req.Date;
             var existing = await db.SeatUnavailabilities
                 .FirstOrDefaultAsync(u => u.SeatId == seatId && u.Date == date);
@@ -81,17 +112,24 @@ public static class SeatsApi
             }
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        });
 
-        group.MapPost("/{seatId:int}/position", async (int seatId, SetPositionRequest req, SeatPlanDbContext db) =>
+        group.MapPost("/{seatId:int}/position", async (int seatId, SetPositionRequest req, HttpContext http, SeatPlanDbContext db) =>
         {
             var seat = await db.Seats.FindAsync(seatId);
             if (seat is null) return Results.NotFound();
+            var role = http.User.FindFirstValue(ClaimTypes.Role);
+            if (role != "superAdmin")
+            {
+                var fnId = http.User.FindFirstValue("functionId");
+                if (role != "functionAdmin" || !int.TryParse(fnId, out var cf) || cf != seat.FunctionId)
+                    return Results.Forbid();
+            }
             seat.PositionX = req.PositionX;
             seat.PositionY = req.PositionY;
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        });
 
         return group;
     }

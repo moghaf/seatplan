@@ -18,7 +18,7 @@ import type { WorkFunction } from './types';
 
 export default function App() {
   const { t } = useTranslation();
-  const { user, isAdmin, isAuthenticated, login, logout } = useAuth();
+  const { user, isSuperAdmin, isFunctionAdmin, isAdmin, isAuthenticated, login, logout } = useAuth();
   const { dark, toggle: toggleTheme } = useTheme();
   const [fnList, setFnList] = useState<WorkFunction[]>([]);
   const [selectedFnId, setSelectedFnId] = useState<number | undefined>();
@@ -28,27 +28,32 @@ export default function App() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showSeatMap, setShowSeatMap] = useState(false);
 
+  const visibleFnList = isSuperAdmin
+    ? fnList
+    : fnList.filter(fn => isFunctionAdmin && user?.functionId === fn.id);
+
   const { seats, teams, members, weeks, loading, refresh } = useData(selectedFnId);
 
   const loadFunctions = useCallback(async () => {
     try {
       const fns = await api.functions.list();
       setFnList(fns);
-      if (fns.length > 0 && selectedFnId === undefined) {
-        setSelectedFnId(fns[0].id);
+      const visible = isSuperAdmin ? fns : fns.filter(f => isFunctionAdmin && user?.functionId === f.id);
+      if (visible.length > 0 && (selectedFnId === undefined || !visible.some(v => v.id === selectedFnId))) {
+        setSelectedFnId(visible[0].id);
       }
     } catch (e) {
       console.error("Failed to load functions", e);
     } finally {
       setFnsLoaded(true);
     }
-  }, [selectedFnId]);
+  }, [selectedFnId, isSuperAdmin, isFunctionAdmin, user?.functionId]);
 
   useEffect(() => { loadFunctions(); }, [loadFunctions]);
 
   if (!isAuthenticated) return <LoginPage onLogin={login} />;
 
-  const selectedFn = fnList.find(f => f.id === selectedFnId);
+  const selectedFn = visibleFnList.find(f => f.id === selectedFnId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950">
@@ -69,7 +74,7 @@ export default function App() {
               onChange={e => setSelectedFnId(e.target.value ? Number(e.target.value) : undefined)}
               className="appearance-none ps-3 pe-8 py-1.5 text-sm border rounded-xl bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
             >
-              {fnList.map(fn => (
+              {visibleFnList.map(fn => (
                 <option key={fn.id} value={fn.id}>{fn.name}</option>
               ))}
             </select>

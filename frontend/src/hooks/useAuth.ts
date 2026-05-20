@@ -33,8 +33,12 @@ export function useAuth() {
   return {
     user,
     token,
-    isAdmin: user?.role === 'admin',
+    isSuperAdmin: user?.role === 'superAdmin',
+    isFunctionAdmin: user?.role === 'functionAdmin',
+    isAdmin: user?.role === 'superAdmin' || user?.role === 'functionAdmin',
     isAuthenticated: !!token,
+    canManageFunction: (fnId: number) =>
+      user?.role === 'superAdmin' || (user?.role === 'functionAdmin' && user?.functionId === fnId),
     login,
     logout,
   };

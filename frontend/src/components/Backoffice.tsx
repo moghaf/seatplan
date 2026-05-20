@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Pencil, ArrowLeft, Key, Users, Table, Palette, Calendar } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowLeft, Key, Users, Table, Palette, Calendar, Shield as ShieldIcon } from 'lucide-react';
 import { api } from '../api';
 import type { WorkFunction, Team, TeamMember, Seat, UserInfo, Holiday } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 const PERSIAN_MONTHS = [
   'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
@@ -17,6 +18,7 @@ interface Props {
 
 export function Backoffice({ functions, onBack, onUpdate }: Props) {
   const { t } = useTranslation();
+  const { isSuperAdmin, user } = useAuth();
   const [activeFn, setActiveFn] = useState<WorkFunction | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -25,6 +27,22 @@ export function Backoffice({ functions, onBack, onUpdate }: Props) {
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [tab, setTab] = useState<'teams' | 'members' | 'seats' | 'users' | 'holidays'>('teams');
+
+  const allowedFns = isSuperAdmin
+    ? functions
+    : functions.filter(f => f.id === user?.functionId);
+
+  useEffect(() => {
+    if (allowedFns.length > 0 && !activeFn) {
+      setActiveFn(allowedFns[0]);
+    }
+  }, [allowedFns, activeFn]);
+
+  useEffect(() => {
+    if (activeFn && allowedFns.every(f => f.id !== activeFn.id)) {
+      setActiveFn(allowedFns[0] ?? null);
+    }
+  }, [allowedFns, activeFn]);
 
   const selectFn = async (fn: WorkFunction) => {
     setActiveFn(fn);
@@ -68,7 +86,7 @@ export function Backoffice({ functions, onBack, onUpdate }: Props) {
           <div className="lg:w-56 flex-shrink-0">
             <h3 className="text-sm font-bold mb-3 dark:text-gray-200">{t('backoffice.functions')}</h3>
             <div className="space-y-1 mb-3 max-h-64 overflow-y-auto">
-              {functions.map(fn => (
+              {allowedFns.map(fn => (
                 <button
                   key={fn.id}
                   onClick={() => { selectFn(fn); setTab('teams'); }}
@@ -80,7 +98,7 @@ export function Backoffice({ functions, onBack, onUpdate }: Props) {
                 </button>
               ))}
             </div>
-            <AddFunctionForm onUpdate={onUpdate} />
+            {isSuperAdmin && <AddFunctionForm onUpdate={onUpdate} />}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -106,14 +124,16 @@ export function Backoffice({ functions, onBack, onUpdate }: Props) {
               >
                 <Key size={14} /> {t('backoffice.users')}
               </button>
-              <button
-                onClick={async () => { setTab('holidays'); setHolidays(await api.holidays.list()); }}
-                className={`flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-xl font-medium transition-colors whitespace-nowrap ${
-                  tab === 'holidays' ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <Calendar size={14} /> {t('backoffice.holidays')}
-              </button>
+              {isSuperAdmin && (
+                <button
+                  onClick={async () => { setTab('holidays'); setHolidays(await api.holidays.list()); }}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-xl font-medium transition-colors whitespace-nowrap ${
+                    tab === 'holidays' ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Calendar size={14} /> {t('backoffice.holidays')}
+                </button>
+              )}
             </div>
 
             {tab === 'teams' && activeFn && (
@@ -129,7 +149,7 @@ export function Backoffice({ functions, onBack, onUpdate }: Props) {
               <HolidaysSection holidays={holidays} onUpdate={async () => setHolidays(await api.holidays.list())} />
             )}
             {tab === 'users' && (
-              <UsersSection users={users} allMembers={allMembers} onUpdate={selectUsers} />
+              <UsersSection users={users} allMembers={allMembers} functions={functions} onUpdate={selectUsers} />
             )}
           </div>
         </div>
@@ -505,8 +525,9 @@ function HolidaysSection({ holidays, onUpdate }: { holidays: Holiday[]; onUpdate
   );
 }
 
-function UsersSection({ users, allMembers, onUpdate }: { users: UserInfo[]; allMembers: TeamMember[]; onUpdate: () => void }) {
+function UsersSection({ users, allMembers, functions, onUpdate }: { users: UserInfo[]; allMembers: TeamMember[]; functions: WorkFunction[]; onUpdate: () => void }) {
   const { t } = useTranslation();
+  const { isSuperAdmin } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -533,49 +554,52 @@ function UsersSection({ users, allMembers, onUpdate }: { users: UserInfo[]; allM
 
       <div className="space-y-1.5 mb-4 max-h-96 overflow-y-auto">
         {users.map(u => (
-          <UserRow key={u.id} user={u} allMembers={allMembers} onUpdate={onUpdate} />
+          <UserRow key={u.id} user={u} allMembers={allMembers} functions={functions} onUpdate={onUpdate} />
         ))}
         {users.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">{t('backoffice.noUsers')}</p>}
       </div>
 
-      <div className="border-t dark:border-gray-700 pt-4">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('backoffice.newUser')}</p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            placeholder={t('backoffice.username')}
-            className="flex-1 min-w-[130px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            value={displayName}
-            onChange={e => setDisplayName(e.target.value)}
-            placeholder={t('backoffice.displayName')}
-            className="flex-1 min-w-[130px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder={t('backoffice.password')}
-            type="password"
-            className="flex-1 min-w-[110px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
-            onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
-          />
-          <button
-            onClick={handleCreate}
-            className="flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all
-              bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700 shadow-sm hover:shadow"
-          >
-            <Plus size={16} /> {t('backoffice.add')}
-          </button>
+      {isSuperAdmin && (
+        <div className="border-t dark:border-gray-700 pt-4">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('backoffice.newUser')}</p>
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder={t('backoffice.username')}
+              className="flex-1 min-w-[130px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
+            />
+            <input
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder={t('backoffice.displayName')}
+              className="flex-1 min-w-[130px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
+            />
+            <input
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder={t('backoffice.password')}
+              type="password"
+              className="flex-1 min-w-[110px] px-3 py-2.5 text-sm border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-gray-700 dark:text-white"
+              onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+            />
+            <button
+              onClick={handleCreate}
+              className="flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all
+                bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700 shadow-sm hover:shadow"
+            >
+              <Plus size={16} /> {t('backoffice.add')}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function UserRow({ user, allMembers, onUpdate }: { user: UserInfo; allMembers: TeamMember[]; onUpdate: () => void }) {
+function UserRow({ user, allMembers, functions, onUpdate }: { user: UserInfo; allMembers: TeamMember[]; functions: WorkFunction[]; onUpdate: () => void }) {
   const { t } = useTranslation();
+  const { isSuperAdmin } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
 
@@ -591,6 +615,17 @@ function UserRow({ user, allMembers, onUpdate }: { user: UserInfo; allMembers: T
     onUpdate();
   };
 
+  const handleRoleChange = async (role: string) => {
+    const fnId = role === 'functionAdmin' ? functions[0]?.id ?? null : null;
+    await api.auth.setRole(user.id, role, fnId);
+    onUpdate();
+  };
+
+  const handleFunctionChange = async (functionId: string) => {
+    await api.auth.setRole(user.id, user.role, functionId ? Number(functionId) : null);
+    onUpdate();
+  };
+
   return (
     <div className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 group transition-colors">
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -598,9 +633,34 @@ function UserRow({ user, allMembers, onUpdate }: { user: UserInfo; allMembers: T
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate dark:text-gray-200">{user.displayName}</div>
-        <div className="text-xs text-gray-400 dark:text-gray-500">@{user.username} · {user.role}</div>
+        <div className="text-xs text-gray-400 dark:text-gray-500">@{user.username}</div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {isSuperAdmin && (
+          <>
+            <select
+              value={user.role}
+              onChange={e => handleRoleChange(e.target.value)}
+              className="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              <option value="user">{t('backoffice.roleUser')}</option>
+              <option value="functionAdmin">{t('backoffice.roleFunctionAdmin')}</option>
+              <option value="superAdmin">{t('backoffice.roleSuperAdmin')}</option>
+            </select>
+            {user.role === 'functionAdmin' && (
+              <select
+                value={user.functionId ?? ''}
+                onChange={e => handleFunctionChange(e.target.value)}
+                className="text-xs border dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              >
+                <option value="">{t('backoffice.selectFunction')}</option>
+                {functions.map(fn => (
+                  <option key={fn.id} value={fn.id}>{fn.name}</option>
+                ))}
+              </select>
+            )}
+          </>
+        )}
         <select
           value={user.teamMemberId ?? ''}
           onChange={e => handleLinkMember(e.target.value)}

@@ -24,7 +24,7 @@ public static class FunctionsApi
             db.Functions.Add(input);
             await db.SaveChangesAsync();
             return Results.Created($"/api/functions/{input.Id}", new { input.Id, input.Name, input.Description });
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         group.MapPut("/{id:int}", async (int id, Function input, SeatPlanDbContext db) =>
         {
@@ -34,7 +34,7 @@ public static class FunctionsApi
             fn.Description = input.Description;
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         group.MapDelete("/{id:int}", async (int id, SeatPlanDbContext db) =>
         {
@@ -43,7 +43,7 @@ public static class FunctionsApi
             db.Functions.Remove(fn);
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         return group;
     }

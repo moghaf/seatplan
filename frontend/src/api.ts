@@ -45,6 +45,11 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ teamMemberId }),
       }),
+    setRole: (id: number, role: string, functionId?: number | null) =>
+      request<import('./types').UserInfo>(`/api/auth/users/${id}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role, functionId }),
+      }),
     changePassword: (currentPassword: string, newPassword: string) =>
       request('/api/auth/me/password', {
         method: 'PUT',

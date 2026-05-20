@@ -6,7 +6,9 @@ public class User
     public string Username { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
-    public string Role { get; set; } = "viewer";
+    public string Role { get; set; } = "user";
     public int? TeamMemberId { get; set; }
     public TeamMember? TeamMember { get; set; }
+    public int? FunctionId { get; set; }
+    public Function? Function { get; set; }
 }

@@ -64,6 +64,7 @@ export interface UserInfo {
   displayName: string;
   role: string;
   teamMemberId: number | null;
+  functionId: number | null;
 }
 
 export interface LoginResponse {

@@ -16,17 +16,25 @@ public static class AssignmentsApi
 
         group.MapPost("/", async (SeatAssignment assignment, HttpContext http, SeatPlanDbContext db) =>
         {
-            var userTeamMemberId = GetUserTeamMemberId(http);
             var role = http.User.FindFirstValue(ClaimTypes.Role);
-
-            if (role != "admin")
+            if (role != "superAdmin")
             {
-                if (userTeamMemberId is null || assignment.TeamMemberId != userTeamMemberId.Value)
-                    return Results.Forbid();
+                if (role == "functionAdmin")
+                {
+                    var fnId = http.User.FindFirstValue("functionId");
+                    if (!int.TryParse(fnId, out var cf))
+                        return Results.Forbid();
+                    var member = await db.TeamMembers.Include(m => m.Team).FirstOrDefaultAsync(m => m.Id == assignment.TeamMemberId);
+                    if (member is null || member.Team.FunctionId != cf)
+                        return Results.Forbid();
+                }
+                else
+                {
+                    var userTeamMemberId = GetUserTeamMemberId(http);
+                    if (userTeamMemberId is null || assignment.TeamMemberId != userTeamMemberId.Value)
+                        return Results.Forbid();
+                }
             }
-
-
-
 
             var persian = new PersianCalendar();
             var dt = assignment.Date.ToDateTime(TimeOnly.MinValue);
@@ -41,6 +49,11 @@ public static class AssignmentsApi
             if (exists)
                 return Results.Conflict("Seat already assigned on this day.");
 
+            var memberAssigned = await db.SeatAssignments.AnyAsync(a =>
+                a.TeamMemberId == assignment.TeamMemberId && a.Date == assignment.Date);
+            if (memberAssigned)
+                return Results.Conflict("Team member already assigned to a seat on this day.");
+
             db.SeatAssignments.Add(assignment);
             await db.SaveChangesAsync();
             return Results.Created($"/api/assignments/{assignment.Id}", assignment);
@@ -48,15 +61,24 @@ public static class AssignmentsApi
 
         group.MapDelete("/{id:int}", async (int id, HttpContext http, SeatPlanDbContext db) =>
         {
-            var a = await db.SeatAssignments.FindAsync(id);
+            var a = await db.SeatAssignments.Include(x => x.TeamMember).ThenInclude(m => m.Team).FirstOrDefaultAsync(x => x.Id == id);
             if (a is null) return Results.NotFound();
 
             var role = http.User.FindFirstValue(ClaimTypes.Role);
-            if (role != "admin")
+            if (role != "superAdmin")
             {
-                var userTeamMemberId = GetUserTeamMemberId(http);
-                if (userTeamMemberId is null || a.TeamMemberId != userTeamMemberId.Value)
-                    return Results.Forbid();
+                if (role == "functionAdmin")
+                {
+                    var fnId = http.User.FindFirstValue("functionId");
+                    if (!int.TryParse(fnId, out var cf) || a.TeamMember.Team.FunctionId != cf)
+                        return Results.Forbid();
+                }
+                else
+                {
+                    var userTeamMemberId = GetUserTeamMemberId(http);
+                    if (userTeamMemberId is null || a.TeamMemberId != userTeamMemberId.Value)
+                        return Results.Forbid();
+                }
             }
 
             db.SeatAssignments.Remove(a);

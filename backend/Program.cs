@@ -53,12 +53,38 @@ using (var scope = app.Services.CreateScope())
         db.Database.ExecuteSqlRaw("ALTER TABLE Seats ADD COLUMN PositionY INTEGER NULL");
     }
 
+    try
+    {
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_SeatAssignments_TeamMemberId_Date ON SeatAssignments(TeamMemberId, Date)");
+    }
+    catch
+    {
+        var dupes = db.SeatAssignments
+            .GroupBy(a => new { a.TeamMemberId, a.Date })
+            .Where(g => g.Count() > 1)
+            .ToList();
+        foreach (var group in dupes)
+            foreach (var dupe in group.OrderBy(a => a.Id).Skip(1))
+                db.SeatAssignments.Remove(dupe);
+        db.SaveChanges();
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_SeatAssignments_TeamMemberId_Date ON SeatAssignments(TeamMemberId, Date)");
+    }
+
+    try { db.Database.ExecuteSqlRaw("SELECT FunctionId FROM Users LIMIT 1"); }
+    catch
+    {
+        db.Database.ExecuteSqlRaw("ALTER TABLE Users ADD COLUMN FunctionId INTEGER NULL");
+    }
+
+    db.Database.ExecuteSqlRaw("UPDATE Users SET Role = 'superAdmin' WHERE Role = 'admin'");
+    db.Database.ExecuteSqlRaw("UPDATE Users SET Role = 'user' WHERE Role = 'viewer'");
+
     if (!db.Functions.Any())
     {
         SeedData.Seed(db);
     }
 
-    if (!db.Users.Any(u => u.Role == "admin"))
+    if (!db.Users.Any(u => u.Role == "superAdmin"))
     {
         var adminUsername = app.Configuration["Seed:Admin:Username"] ?? "admin";
         var adminPassword = app.Configuration["Seed:Admin:Password"] ?? "admin";
@@ -69,7 +95,7 @@ using (var scope = app.Services.CreateScope())
             Username = adminUsername,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
             DisplayName = adminDisplayName,
-            Role = "admin"
+            Role = "superAdmin"
         });
     }
 
@@ -84,7 +110,7 @@ using (var scope = app.Services.CreateScope())
                 Username = member.Name.ToLowerInvariant(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(member.Name + "1234"),
                 DisplayName = member.Name,
-                Role = "viewer",
+                Role = "user",
                 TeamMemberId = member.Id
             });
         }

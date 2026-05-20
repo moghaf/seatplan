@@ -83,7 +83,11 @@
     "seatMapDragHint": "Drag to position. Click name to rename.",
     "seatMapNoSeats": "No seats positioned yet. Add a seat to get started.",
     "seatMapUnplaced": "Seats without a position (click Place to add to map):",
-    "seatMapPlace": "Place"
+    "seatMapPlace": "Place",
+    "roleUser": "User",
+    "roleFunctionAdmin": "Function Admin",
+    "roleSuperAdmin": "Super Admin",
+    "selectFunction": "Select function..."
   },
   "memberPanel": {
     "title": "Members",

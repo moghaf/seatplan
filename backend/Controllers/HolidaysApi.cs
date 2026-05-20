@@ -17,7 +17,7 @@ public static class HolidaysApi
             db.Holidays.Add(holiday);
             await db.SaveChangesAsync();
             return Results.Created($"/api/holidays/{holiday.Id}", holiday);
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         group.MapPut("/{id:int}", async (int id, Holiday input, SeatPlanDbContext db) =>
         {
@@ -28,7 +28,7 @@ public static class HolidaysApi
             holiday.Day = input.Day;
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         group.MapDelete("/{id:int}", async (int id, SeatPlanDbContext db) =>
         {
@@ -37,7 +37,7 @@ public static class HolidaysApi
             db.Holidays.Remove(holiday);
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("superAdmin"));
 
         return group;
     }
