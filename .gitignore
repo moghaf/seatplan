@@ -16,6 +16,7 @@ frontend/.env
 
 # SQLite
 *.db
+backend/seatplan.db
 *.db-wal
 *.db-shm
 
