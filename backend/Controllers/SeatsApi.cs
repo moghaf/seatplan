@@ -30,7 +30,7 @@ public static class SeatsApi
 
             var seats = await query.OrderBy(s => s.Name).ToListAsync();
             return seats.Select(s => new {
-                s.Id, s.Name, s.FunctionId,
+                s.Id, s.Name, s.FunctionId, s.PositionX, s.PositionY,
                 Assignments = s.Assignments.Select(a => new {
                     a.Id, a.TeamMemberId, a.Date,
                     MemberName = a.TeamMember.Name,
