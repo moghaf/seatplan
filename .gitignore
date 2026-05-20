@@ -33,3 +33,4 @@ Thumbs.db
 *.sln.docstates
 
 backend/Data/seed-data.json
+seatplan-images.tar
