@@ -1,0 +1,34 @@
+# .NET
+backend/bin/
+backend/obj/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+[Dd]ebug/
+[Rr]elease/
+*.DotSettings.user
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.sln.docstates
+
+backend/Data/SeedData.cs

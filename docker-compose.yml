@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - seatplan-data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Data Source=data/seatplan.db
+
+  frontend:
+    build:
+      context: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  seatplan-data:
