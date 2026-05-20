@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Pencil, ArrowLeft, Key, Users, Table, Palette, Calendar, Shield as ShieldIcon } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowLeft, Key, Users, Table, Palette, Calendar } from 'lucide-react';
 import { api } from '../api';
 import type { WorkFunction, Team, TeamMember, Seat, UserInfo, Holiday } from '../types';
 import { useAuth } from '../hooks/useAuth';
