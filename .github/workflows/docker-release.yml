@@ -1,0 +1,88 @@
+name: Build Docker Images & Create Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}-backend
+  FRONTEND_IMAGE: ${{ github.repository }}-frontend
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend image
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Extract metadata for frontend image
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## SeatPlan ${{ github.ref_name }}
+
+            ### Docker Images
+
+            Pull the backend image:
+            ```sh
+            docker pull ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.ref_name }}
+            ```
+
+            Pull the frontend image:
+            ```sh
+            docker pull ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.ref_name }}
+            ```
+
+            ### Run with Docker Compose
+
+            Use `docker compose up` with the provided `docker-compose.yml` after updating the image tags.
+          draft: false
+          prerelease: false
