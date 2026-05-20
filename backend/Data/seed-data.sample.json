@@ -1,0 +1,44 @@
+{
+  "Functions": [
+    { "Id": 1, "Name": "Platform", "Description": "Platform engineering teams" }
+  ],
+  "Teams": [
+    { "Id": 1, "Name": "Platform", "Color": "#F59E0B", "FunctionId": 1 },
+    { "Id": 2, "Name": "Platform.NET", "Color": "#3B82F6", "FunctionId": 1 },
+    { "Id": 3, "Name": "Platform.PHP", "Color": "#8B5CF6", "FunctionId": 1 },
+    { "Id": 4, "Name": "Martech", "Color": "#10B981", "FunctionId": 1 }
+  ],
+  "TeamMembers": [
+    { "Id": 1, "Name": "Neshat", "Role": "tech lead", "TeamId": 4 },
+    { "Id": 2, "Name": "Ghaf", "Role": "tech lead", "TeamId": 2 },
+    { "Id": 3, "Name": "Sadegh", "Role": "tech lead", "TeamId": 3 },
+    { "Id": 4, "Name": "Javid", "Role": "director", "TeamId": 1 },
+    { "Id": 5, "Name": "Mahmoud", "Role": "developer", "TeamId": 2 },
+    { "Id": 6, "Name": "Mahyar", "Role": "developer", "TeamId": 4 },
+    { "Id": 7, "Name": "Feri", "Role": "developer", "TeamId": 3 },
+    { "Id": 8, "Name": "Mehrdad", "Role": "developer", "TeamId": 3 },
+    { "Id": 9, "Name": "Parsa", "Role": "developer", "TeamId": 3 },
+    { "Id": 10, "Name": "Zeynab", "Role": "QA", "TeamId": 4 },
+    { "Id": 11, "Name": "Ali", "Role": "frontend developer", "TeamId": 4 }
+  ],
+  "Seats": [
+    { "Id": 1, "Name": "seat1", "FunctionId": 1, "PositionX": 60, "PositionY": 50 },
+    { "Id": 2, "Name": "seat2", "FunctionId": 1, "PositionX": 220, "PositionY": 50 },
+    { "Id": 3, "Name": "seat3", "FunctionId": 1, "PositionX": 380, "PositionY": 50 },
+    { "Id": 4, "Name": "seat4", "FunctionId": 1, "PositionX": 60, "PositionY": 160 },
+    { "Id": 5, "Name": "seat5", "FunctionId": 1, "PositionX": 220, "PositionY": 160 },
+    { "Id": 6, "Name": "aux seat", "FunctionId": 1, "PositionX": 380, "PositionY": 160 }
+  ],
+  "Holidays": [
+    { "Id": 1, "Name": "نوروز", "Month": 1, "Day": 1 },
+    { "Id": 2, "Name": "عید نوروز", "Month": 1, "Day": 2 },
+    { "Id": 3, "Name": "عید نوروز", "Month": 1, "Day": 3 },
+    { "Id": 4, "Name": "عید نوروز", "Month": 1, "Day": 4 },
+    { "Id": 5, "Name": "روز جمهوری اسلامی", "Month": 1, "Day": 12 },
+    { "Id": 6, "Name": "روز طبیعت (سیزده‌به‌در)", "Month": 1, "Day": 13 },
+    { "Id": 7, "Name": "رحلت امام خمینی", "Month": 3, "Day": 14 },
+    { "Id": 8, "Name": "قیام ۱۵ خرداد", "Month": 3, "Day": 15 },
+    { "Id": 9, "Name": "پیروزی انقلاب اسلامی", "Month": 11, "Day": 22 },
+    { "Id": 10, "Name": "ملی شدن صنعت نفت", "Month": 12, "Day": 29 }
+  ]
+}
