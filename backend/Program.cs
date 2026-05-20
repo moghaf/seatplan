@@ -60,11 +60,15 @@ using (var scope = app.Services.CreateScope())
 
     if (!db.Users.Any(u => u.Role == "admin"))
     {
+        var adminUsername = app.Configuration["Seed:Admin:Username"] ?? "admin";
+        var adminPassword = app.Configuration["Seed:Admin:Password"] ?? "admin";
+        var adminDisplayName = app.Configuration["Seed:Admin:DisplayName"] ?? "Admin";
+
         db.Users.Add(new SeatPlan.Api.Entities.User
         {
-            Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
-            DisplayName = "Admin",
+            Username = adminUsername,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+            DisplayName = adminDisplayName,
             Role = "admin"
         });
     }
