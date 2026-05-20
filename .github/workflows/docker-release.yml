@@ -28,21 +28,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
+      - name: Build backend image
         id: build-backend
         env:
           BACKEND_TAG: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.ref_name }}
         run: |
           docker build -t $BACKEND_TAG backend/
-          docker push $BACKEND_TAG
 
-      - name: Build and push frontend image
+      - name: Push backend image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.ref_name }}
+
+      - name: Build frontend image
         id: build-frontend
         env:
           FRONTEND_TAG: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.ref_name }}
         run: |
           docker build -t $FRONTEND_TAG frontend/
-          docker push $FRONTEND_TAG
+
+      - name: Push frontend image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.ref_name }}
 
       - name: Tag latest images
         env:
