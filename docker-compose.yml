@@ -9,6 +9,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__Default=Data Source=data/seatplan.db
+      - Seed__Admin__Username=${SEED_ADMIN_USERNAME:-admin}
+      - Seed__Admin__Password=${SEED_ADMIN_PASSWORD:-admin}
+      - Seed__Admin__DisplayName=${SEED_ADMIN_DISPLAY_NAME:-Admin}
 
   frontend:
     build:
